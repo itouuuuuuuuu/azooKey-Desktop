@@ -151,3 +151,77 @@ Thanks to authors!!
 
 ## Acknowledgement
 本プロジェクトは情報処理推進機構(IPA)による[2024年度未踏IT人材発掘・育成事業](https://www.ipa.go.jp/jinzai/mitou/it/2024/koubokekka.html)の支援を受けて開発を行いました。
+
+---
+
+## 再インストールコマンド早見表（ローカル開発メモ）
+
+開発中の再インストールに使うコマンドを用途別に整理しました。
+
+### 1. 通常の再インストール（コード変更を反映する基本フロー）
+
+```bash
+cd /Users/ito.masafumi/repos/oss/azooKey-Desktop
+./install.sh
+```
+
+`install.sh` の中で SwiftLint → archive ビルド → `/Library/Input Methods/` への上書き → `pkill azooKeyMac` まで実行。**通常の開発中はこれだけでOK**。`pkill` 後に macOS が自動で azooKey プロセスを再起動するので、変更が即反映されます。
+
+> 💡 ターミナルから直接 `./install.sh` を実行すれば sudo パスワードプロンプトが出るので、そこでパスワードを入力すればOK。
+
+### 2. SwiftLint をスキップして高速リビルド
+
+```bash
+./install.sh --ignore-lint
+```
+
+軽微な実験中など、Lint のフォーマット待ちを避けたいとき。
+
+### 3. ビルドのみ（インストールしない）
+
+```bash
+./install.sh --dry-run
+```
+
+ビルド成功するか確認したいだけのとき。`/Library/Input Methods/` には触らない。
+
+### 4. インストールだけ手動でやる（ビルド済み artifact を再配置）
+
+何らかの理由で `install.sh` の sudo 部分だけ失敗した場合や、archive 済みの artifact をもう一度入れ直したいとき:
+
+```bash
+sudo rm -rf "/Library/Input Methods/azooKeyMac.app"
+sudo cp -r /Users/ito.masafumi/repos/oss/azooKey-Desktop/build/archive.xcarchive/Products/Applications/azooKeyMac.app "/Library/Input Methods/"
+pkill azooKeyMac 2>/dev/null; echo done
+```
+
+### 5. プロセスだけ再起動（コード変更なしで挙動リセット）
+
+```bash
+pkill azooKeyMac
+```
+
+設定変更や状態リセットだけしたいとき。macOS が自動でプロセスを再起動。
+
+### 6. ハマったときのリセット手順（軽 → 重）
+
+| 症状                         | コマンド／対処                                                                       |
+| ---------------------------- | ------------------------------------------------------------------------------------ |
+| 変換がおかしい・状態が壊れた | `pkill azooKeyMac`                                                                   |
+| `install.sh` がビルドエラー  | `rm -rf ~/Library/Developer/Xcode/DerivedData/azooKeyMac-*` → `./install.sh`         |
+| Swift Package が壊れた       | 同上（DerivedData 削除）。Xcode で **File → Packages → Reset Package Caches** でもOK |
+| それでも変                   | システム設定 → キーボード → 入力ソースから azooKey を**削除して再追加**              |
+| 完全初期化                   | macOS から**ログアウト→再ログイン**                                                  |
+
+### 7. ビルド成果物の確認用
+
+```bash
+# 署名・bundle ID 確認
+codesign -dv "/Library/Input Methods/azooKeyMac.app" 2>&1 | head -10
+
+# インストール済みのバージョン確認
+defaults read "/Library/Input Methods/azooKeyMac.app/Contents/Info.plist" CFBundleShortVersionString
+
+# プロセス状況
+pgrep -lf azooKeyMac
+```
