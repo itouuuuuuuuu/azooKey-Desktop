@@ -160,8 +160,9 @@ Thanks to authors!!
 
 ### 1. 通常の再インストール（コード変更を反映する基本フロー）
 
+リポジトリルート（`azooKey-Desktop/`）で実行:
+
 ```bash
-cd /Users/ito.masafumi/repos/oss/azooKey-Desktop
 ./install.sh
 ```
 
@@ -189,9 +190,11 @@ cd /Users/ito.masafumi/repos/oss/azooKey-Desktop
 
 何らかの理由で `install.sh` の sudo 部分だけ失敗した場合や、archive 済みの artifact をもう一度入れ直したいとき:
 
+リポジトリルート（`azooKey-Desktop/`）で実行:
+
 ```bash
 sudo rm -rf "/Library/Input Methods/azooKeyMac.app"
-sudo cp -r /Users/ito.masafumi/repos/oss/azooKey-Desktop/build/archive.xcarchive/Products/Applications/azooKeyMac.app "/Library/Input Methods/"
+sudo cp -r build/archive.xcarchive/Products/Applications/azooKeyMac.app "/Library/Input Methods/"
 pkill azooKeyMac 2>/dev/null; echo done
 ```
 
